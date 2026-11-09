@@ -1,0 +1,14 @@
+{
+  "expected_sha256": {
+    "shenzhen_stations.csv": "50f29154006d25b60b8943360afce4df7482b7013c98aab51eca7389c2fc6bad",
+    "station_exits.csv": "bf7f1479791b68e81b88b4d7fc405726ca1859144d22ddd398d80ec4bdddc6a6"
+  },
+  "exit_station_district": {"梨园": "Longgang"},
+  "coordinate_mapping": "latitude_is_longitude",
+  "exit_count_mode": "atomic",
+  "notes": [
+    "梨园出口B/C归属Longgang是基于源地标与唯一运营候选的显式假设，仍需课程确认。",
+    "源latitude数值为113-114，映射为经度；原文件不修改。",
+    "组合出口展开，组内地标分配给全部成员出口；物理可达性未额外核实。"
+  ]
+}

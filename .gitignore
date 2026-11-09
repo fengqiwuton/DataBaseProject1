@@ -1,0 +1,7 @@
+.runtime/
+app/build/
+app/target/
+config/db.properties
+config/fare.csv
+**/__pycache__/
+dist/

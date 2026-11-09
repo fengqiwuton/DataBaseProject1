@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1160" viewBox="0 0 1800 1160">
+<rect width="100%" height="100%" fill="white"/>
+<text x="70" y="71" font-family="Microsoft YaHei, sans-serif" font-size="36" font-weight="700" fill="#233d4a">深圳地铁概念 E-R 图</text>
+<text x="70" y="118" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#617680">Lecture 7 表示法｜概念实体、联系与属性｜与当前六表实现保持一致</text>
+<rect x="80" y="245" width="300" height="150" fill="white" stroke="#476371" stroke-width="2"/>
+<rect x="80" y="245" width="300" height="52" fill="#dbeaf1" stroke="#476371" stroke-width="2"/>
+<text x="146.75" y="279" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="700" fill="#233d4a">行政区 District</text>
+<text x="100" y="333" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">district_id</text>
+<polyline points="100,338 205.5,338" fill="none" stroke="#476371" stroke-width="1"/>
+<text x="100" y="371" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">name_en</text>
+<rect x="740" y="245" width="320" height="264" fill="white" stroke="#476371" stroke-width="2"/>
+<rect x="740" y="245" width="320" height="52" fill="#dbeaf1" stroke="#476371" stroke-width="2"/>
+<text x="829.00390625" y="279" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="700" fill="#233d4a">车站 Station</text>
+<text x="760" y="333" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">station_id</text>
+<polyline points="760,338 865.5,338" fill="none" stroke="#476371" stroke-width="1"/>
+<text x="760" y="371" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">name_zh</text>
+<text x="760" y="409" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">name_en</text>
+<text x="760" y="447" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">lon_mdeg [可空]</text>
+<text x="760" y="485" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">lat_mdeg [可空]</text>
+<rect x="1400" y="245" width="310" height="188" fill="white" stroke="#476371" stroke-width="2"/>
+<rect x="1400" y="245" width="310" height="52" fill="#dbeaf1" stroke="#476371" stroke-width="2"/>
+<text x="1465.5" y="279" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="700" fill="#233d4a">线路 MetroLine</text>
+<text x="1420" y="333" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">line_id</text>
+<polyline points="1420,338 1490.0,338" fill="none" stroke="#476371" stroke-width="1"/>
+<text x="1420" y="371" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">name_zh</text>
+<text x="1420" y="409" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">name_en</text>
+<polygon points="450,325 545,273 640,325 545,377" fill="#f2f7f9" stroke="#476371" stroke-width="2"/>
+<text x="522.0" y="331" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">位于</text>
+<polyline points="380,325 450,325" fill="none" stroke="#476371" stroke-width="2"/>
+<polyline points="640,321 740,321" fill="none" stroke="#476371" stroke-width="2"/>
+<polyline points="640,329 740,329" fill="none" stroke="#476371" stroke-width="2"/>
+<text x="390" y="307" font-family="Microsoft YaHei, sans-serif" font-size="22" font-weight="400" fill="#233d4a">0..*</text>
+<text x="662" y="307" font-family="Microsoft YaHei, sans-serif" font-size="22" font-weight="400" fill="#233d4a">1..1</text>
+<polygon points="1135,365 1230,313 1325,365 1230,417" fill="#f2f7f9" stroke="#476371" stroke-width="2"/>
+<text x="1207.0" y="371" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">经过</text>
+<polyline points="1060,365 1135,365" fill="none" stroke="#476371" stroke-width="2"/>
+<polyline points="1325,365 1400,365" fill="none" stroke="#476371" stroke-width="2"/>
+<text x="1068" y="346" font-family="Microsoft YaHei, sans-serif" font-size="22" font-weight="400" fill="#233d4a">0..*</text>
+<text x="1338" y="346" font-family="Microsoft YaHei, sans-serif" font-size="22" font-weight="400" fill="#233d4a">0..*</text>
+<rect x="1120" y="535" width="330" height="230" fill="white" stroke="#476371" stroke-width="2"/>
+<text x="1140" y="573" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">position</text>
+<text x="1140" y="612" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">status</text>
+<text x="1140" y="651" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">opening_year</text>
+<text x="1140" y="690" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">first_train [可空]</text>
+<text x="1140" y="729" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">last_train [可空]</text>
+<polyline points="1230,417 1230,535" fill="none" stroke="#476371" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="1480" y="576" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="700" fill="#233d4a">关系属性</text>
+<text x="1480" y="621" font-family="Microsoft YaHei, sans-serif" font-size="21" font-weight="400" fill="#617680">不含 station_id</text>
+<text x="1480" y="658" font-family="Microsoft YaHei, sans-serif" font-size="21" font-weight="400" fill="#617680">或 line_id</text>
+<text x="1480" y="709" font-family="Microsoft YaHei, sans-serif" font-size="19" font-weight="400" fill="#617680">它们在映射成表时引入</text>
+<polygon points="790,640 900,588 1010,640 900,692" fill="#f2f7f9" stroke="#476371" stroke-width="2"/>
+<text x="842.0" y="646" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">属于 / 拥有</text>
+<polyline points="900,509 900,588" fill="none" stroke="#476371" stroke-width="2"/>
+<text x="922" y="562" font-family="Microsoft YaHei, sans-serif" font-size="22" font-weight="400" fill="#233d4a">0..*</text>
+<polyline points="896,692 896,795" fill="none" stroke="#476371" stroke-width="2"/>
+<polyline points="904,692 904,795" fill="none" stroke="#476371" stroke-width="2"/>
+<text x="925" y="755" font-family="Microsoft YaHei, sans-serif" font-size="22" font-weight="400" fill="#233d4a">1..1</text>
+<rect x="740" y="795" width="420" height="188" fill="white" stroke="#476371" stroke-width="2"/>
+<rect x="740" y="795" width="420" height="52" fill="#dbeaf1" stroke="#476371" stroke-width="2"/>
+<text x="856.75390625" y="829" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="700" fill="#233d4a">出口 StationExit</text>
+<text x="760" y="883" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">exit_id</text>
+<polyline points="760,888 830.0,888" fill="none" stroke="#476371" stroke-width="1"/>
+<text x="760" y="921" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">exit_code</text>
+<text x="760" y="959" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" fill="#233d4a">{ landmark_name }</text>
+<text x="90" y="543" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="700" fill="#233d4a">业务唯一性（映射后由约束落实）</text>
+<text x="90" y="590" font-family="Microsoft YaHei, sans-serif" font-size="21" font-weight="400" fill="#233d4a">District.name_en 唯一</text>
+<text x="90" y="632" font-family="Microsoft YaHei, sans-serif" font-size="21" font-weight="400" fill="#233d4a">Station：name_zh + 所属行政区唯一</text>
+<text x="90" y="674" font-family="Microsoft YaHei, sans-serif" font-size="21" font-weight="400" fill="#233d4a">MetroLine：中英文名称分别唯一</text>
+<text x="90" y="716" font-family="Microsoft YaHei, sans-serif" font-size="21" font-weight="400" fill="#233d4a">StationExit：所属车站 + exit_code 唯一</text>
+<text x="90" y="758" font-family="Microsoft YaHei, sans-serif" font-size="21" font-weight="400" fill="#233d4a">经过：车站 + 线路唯一；线路 + position 唯一</text>
+<text x="90" y="847" font-family="Microsoft YaHei, sans-serif" font-size="21" font-weight="400" fill="#617680">出口采用全局 exit_id，因此画普通实体。</text>
+<text x="90" y="889" font-family="Microsoft YaHei, sans-serif" font-size="21" font-weight="400" fill="#617680">地标在当前范围内仅有名称，作为多值属性。</text>
+<text x="90" y="931" font-family="Microsoft YaHei, sans-serif" font-size="21" font-weight="400" fill="#617680">可空值与多值集合允许为空，二者含义不同。</text>
+<polyline points="70,1045 1730,1045" fill="none" stroke="#cbd7dc" stroke-width="1"/>
+<text x="70" y="1081" font-family="Microsoft YaHei, sans-serif" font-size="21" font-weight="400" fill="#233d4a">图例：下划线=主键；菱形=联系；虚线连接属性框；{ }=多值属性；双线=全参与。</text>
+<text x="70" y="1120" font-family="Microsoft YaHei, sans-serif" font-size="20" font-weight="400" fill="#617680">l..h 标在实体侧，表示该实体参与该联系的次数（Lecture 7 p.35）；0..* 保留新增空线路/未编线站点。</text>
+</svg>

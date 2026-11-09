@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="metro-token" content="__METRO_TOKEN__"><title>深圳地铁 · 城市轨道数据台</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<body>
+<aside><div class="brand"><span class="mark">M</span><div>深圳地铁<small>城市轨道数据台 · 2026</small></div></div><p class="nav-label">工作空间</p><nav><button data-view="stations" class="active">站点与出口 <span>01</span></button><button data-view="lines">线路编排 <span>02</span></button><button data-view="routes">路线查询 <span>03</span></button><button data-view="queries">数据核验 <span>04</span></button></nav><div class="aside-bottom"><span class="dot"></span> 本地数据库连接<small>源数据包含运营与在建线路<br>查询以项目 CSV 为准</small></div></aside>
+<main><header><div><p class="eyebrow">SHENZHEN / METRO NETWORK</p><h1 id="title">站点与出口</h1><p id="subtitle">从车站出发，查看城市轨道网络。</p></div><span class="badge">CS307 · PROJECT 1</span></header>
+<section class="stats"><article><span>物理站点</span><strong id="stat-stations">—</strong><small>同名站按行政区区分</small></article><article><span>线路与分期</span><strong id="stat-lines">—</strong><small>保留完整线路身份</small></article><article><span>原子出口</span><strong id="stat-exits">—</strong><small>组合出口已展开</small></article><article><span>出口地标关联</span><strong id="stat-landmarks">—</strong><small>空地标保留出口</small></article></section>
+<div id="notice" role="status" aria-live="polite"></div>
+<section class="workspace"><div class="panel controls"><div class="panel-heading"><h2 id="operation-title">操作</h2><span class="mini">WORKBENCH</span></div><label>选择操作<select id="operation"></select></label><form id="operation-form"><div id="fields"></div><button class="primary" type="submit">执行操作 <span>→</span></button></form><p class="hint" id="hint"></p></div><div class="panel results"><div class="panel-heading"><h2 id="result-title">查询结果</h2><button id="reload" class="quiet">刷新</button></div><div id="result" aria-live="polite"><p class="empty">选择操作后，结果会显示在这里。</p></div></div></section>
+<footer>深圳轨道网络 / 运营与规划数据分开查询 <span>票价仅使用另行提供的认可数据</span></footer></main>
+</body></html>
