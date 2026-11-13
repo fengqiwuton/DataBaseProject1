@@ -34,6 +34,9 @@ async function api(action,params={}){
 function notice(message,error=false){$('notice').textContent=message;$('notice').classList.toggle('error',error);}
 function option(select,value,label){const o=element('option',label);o.value=value;select.append(o);}
 function actionSpec(){return groups[current].actions.find(a=>a[0]===$('operation').value);}
+function operationButton() {
+ return $('operation-form').querySelector('button[type=submit]');
+}
 function stationLabel(station) {
  return `${station.name_zh} · ${station.name_en} · ${station.district} · #${station.station_id}`;
 }
@@ -152,7 +155,11 @@ function stationPicker(label,batch) {
  return {box,value};
 }
 function fields(){
- const [action,,keys]=actionSpec();$('fields').replaceChildren();
+ const [action,title,keys]=actionSpec();$('fields').replaceChildren();
+ const submit=operationButton();
+ submit.textContent=title;
+ submit.classList?.toggle('danger',action.endsWith('Delete'));
+ $('operation-title').textContent=writes.has(action)?'编辑条件':'查询条件';
  stationInputs.clear();
  for(const key of keys){
   if(key==='station_ids'||key==='start'||key==='end'||(key==='station_id'&&action!=='stationUpdate')){
@@ -219,7 +226,11 @@ function showTable(rows,parent,columns){
  if(!rows.length&&!columns){parent.append(element('p','没有匹配记录。','empty'));return;}
  const table=element('table'),head=element('thead'),hr=element('tr'),body=element('tbody');
  const keys=columns||Object.keys(rows[0]);
- for(const key of keys)hr.append(element('th',columns?key:columnLabels[key]||labels[key]||key));
+ for(const key of keys){
+  const heading=element('th',columns?key:columnLabels[key]||labels[key]||key);
+  heading.scope='col';
+  hr.append(heading);
+ }
  head.append(hr);
  for(const result of rows){
   const row=element('tr');
@@ -250,7 +261,7 @@ async function refresh(){
  allStations=stations;allLines=lines;districts=ds;
 }
 async function run(){
- const [action,label]=actionSpec(),button=$('operation-form').querySelector('button');
+ const [action,label]=actionSpec(),button=operationButton();
  const view=current;
  const stillCurrent=()=>current===view&&actionSpec()?.[0]===action;
  if(action.endsWith('Delete')&&!confirm('确认执行删除？这会修改当前数据库。'))return;
@@ -262,7 +273,8 @@ async function run(){
   if(action==='lineAdd')selectedLineId=String(data[0].line_id);
   if(stillCurrent()){
    render(data);
-   notice(action==='stations'&&data.length===0?'没有匹配站点。请检查搜索词，或切换匹配字段。':label+'完成');
+   if(action==='stations'&&data.length===0)notice('没有匹配站点。请检查搜索词，或切换匹配字段。');
+   else notice(writes.has(action)?label+'完成':'');
   }
   try{
    if(action==='lineStations'||action==='lineInsert'||action==='lineRemove'){
@@ -295,9 +307,16 @@ async function reloadResults(){
  }catch(e){notice(e.message,true);}
 }
 async function selectView(view){
- current=view;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+ current=view;
+ document.querySelectorAll('nav button').forEach(button=>{
+  if(button.dataset.view===view)button.setAttribute('aria-current','page');
+  else button.removeAttribute('aria-current');
+ });
  $('title').textContent=groups[view].title;$('subtitle').textContent=groups[view].sub;$('operation').replaceChildren();
  for(const [value,label]of groups[view].actions)option($('operation'),value,label);fields();
+ $('operation').disabled=false;
+ $('reload').disabled=false;
+ operationButton().disabled=false;
  if(view==='stations'||view==='lines'||view==='queries')await run();else{$('result').replaceChildren(element('p','选择起终点后开始查询。','empty'));notice('');}
 }
 $('operation-form').addEventListener('submit',e=>{e.preventDefault();run();});$('operation').addEventListener('change',fields);$('reload').addEventListener('click',reloadResults);
@@ -314,7 +333,7 @@ function startSqlPage() {
  $('stats').hidden=true;
  $('sql-workspace').hidden=false;
  $('sql-nav').setAttribute('aria-current','page');
- document.querySelectorAll('nav button').forEach(button=>button.classList.remove('active'));
+ document.querySelectorAll('nav button').forEach(button=>button.removeAttribute('aria-current'));
  const editor=$('sql-text');
  const example=editor.value;
  const form=$('sql-form');
