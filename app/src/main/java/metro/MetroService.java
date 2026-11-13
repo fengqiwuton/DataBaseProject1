@@ -8,6 +8,9 @@ import java.util.*;
 /** Shared business entrypoint for CLI and local browser UI. */
 public final class MetroService {
     public static final Set<String> WRITES=Set.of("stationAdd","stationUpdate","stationDelete","lineAdd","lineUpdate","lineDelete","lineInsert","lineRemove","membershipUpdate");
+    private static final String STATIONS_SQL="SELECT s.*,d.name_en district,"
+        +"(SELECT count(*) FROM station_exit e WHERE e.station_id=s.station_id) exit_count "
+        +"FROM station s JOIN district d USING(district_id) ";
     private final MetroRepository repo;
     private final FareTable fares;
     public MetroService(MetroRepository repo) { this.repo=repo; this.fares=FareTable.fromEnvironment(); }
@@ -19,9 +22,7 @@ public final class MetroService {
             case "stations" -> stations(p);
             case "lines" -> repo.query("SELECT l.*,(SELECT count(*) FROM line_station ls WHERE ls.line_id=l.line_id) station_count FROM metro_line l ORDER BY l.line_id");
             case "lineStations" -> repo.query("SELECT ls.*,s.name_zh,s.name_en,d.name_en district FROM line_station ls JOIN station s USING(station_id) JOIN district d USING(district_id) WHERE line_id=? ORDER BY position",id(p,"line_id"));
-            case "stationDetail" -> Map.of("station",stations(Map.of("station_id",need(p,"station_id"))),
-                "memberships",repo.query("SELECT ls.*,l.name_en line_name FROM line_station ls JOIN metro_line l USING(line_id) WHERE station_id=? ORDER BY line_id",id(p,"station_id")),
-                "exits",repo.query("SELECT e.exit_code,el.landmark_name FROM station_exit e LEFT JOIN exit_landmark el USING(exit_id) WHERE station_id=? ORDER BY e.exit_code,el.landmark_name",id(p,"station_id")));
+            case "stationDetail" -> stationDetail(id(p,"station_id"));
             case "stationAdd", "stationUpdate" -> repo.saveStation(action.equals("stationUpdate")?id(p,"station_id"):null,
                 id(p,"district_id"),need(p,"name_zh"),need(p,"name_en"),optionalInt(p,"lon_mdeg"),optionalInt(p,"lat_mdeg"));
             case "stationDelete" -> repo.deleteStation(id(p,"station_id"));
@@ -47,11 +48,45 @@ public final class MetroService {
         };
     }
     private List<Map<String,Object>> stations(Map<String,String> p) throws SQLException {
-        String base="SELECT s.*,d.name_en district,(SELECT count(*) FROM station_exit e WHERE e.station_id=s.station_id) exit_count FROM station s JOIN district d USING(district_id) ";
+        String base=STATIONS_SQL;
         if(p.containsKey("station_id")) return repo.query(base+"WHERE station_id=?",id(p,"station_id"));
-        String text=p.getOrDefault("search","");
-        return repo.query(base+"WHERE strpos(s.name_zh,?)>0 OR strpos(lower(s.name_en),lower(?))>0 ORDER BY s.name_en COLLATE \"C\",s.station_id",text,text);
+        String text=p.getOrDefault("search","").trim();
+        String order=" ORDER BY s.name_en COLLATE \"C\",s.station_id";
+        if(text.isEmpty()) return repo.query(base+order);
+        Integer number=stationNumber(text);
+        return switch(p.getOrDefault("match","all")) {
+            case "all" -> repo.query(base+"WHERE s.station_id=? OR strpos(s.name_zh,?)>0 OR "
+                +"strpos(lower(s.name_en),lower(?))>0 OR strpos(lower(d.name_en),lower(?))>0"+order,
+                number == null ? 0 : number,text,text,text);
+            case "station_id" -> {
+                if(number==null) throw new IllegalArgumentException("站点编号请输入正整数，例如 347 或 #347。");
+                yield repo.query(base+"WHERE s.station_id=?"+order,number);
+            }
+            case "name_zh" -> repo.query(base+"WHERE strpos(s.name_zh,?)>0"+order,text);
+            case "name_en" -> repo.query(base+"WHERE strpos(lower(s.name_en),lower(?))>0"+order,text);
+            case "district" -> repo.query(base+"WHERE strpos(lower(d.name_en),lower(?))>0"+order,text);
+            default -> throw new IllegalArgumentException("请选择有效的站点匹配字段。");
+        };
     }
+    private static Integer stationNumber(String text) {
+        if(!text.matches("#?[0-9]+")) return null;
+        try {
+            int value=Integer.parseInt(text.startsWith("#")?text.substring(1):text);
+            return value>0?value:null;
+        } catch(NumberFormatException e) { return null; }
+    }
+    private Object stationDetail(int stationId) throws SQLException {
+        return repo.db.transaction(true,c->{
+            var station=MetroRepository.query(c,STATIONS_SQL+"WHERE s.station_id=?",stationId);
+            if(station.isEmpty()) throw new IllegalArgumentException("找不到站点 #"+stationId+"。请刷新站点列表后重新查询。");
+            Map<String,Object> detail=new LinkedHashMap<>();
+            detail.put("station",station);
+            detail.put("memberships",MetroRepository.query(c,"SELECT ls.*,l.name_en line_name FROM line_station ls JOIN metro_line l USING(line_id) WHERE station_id=? ORDER BY line_id",stationId));
+            detail.put("exits",MetroRepository.query(c,"SELECT e.exit_code,el.landmark_name FROM station_exit e LEFT JOIN exit_landmark el USING(exit_id) WHERE station_id=? ORDER BY e.exit_code,el.landmark_name",stationId));
+            return detail;
+        });
+    }
+    Object sqlQuery(String sql) throws SQLException { return SqlConsole.query(repo.db,sql); }
     private MetroRepository.Membership membership(Map<String,String> p) {
         String status=need(p,"status");
         if(!Set.of("Operation","Construction").contains(status)) throw new IllegalArgumentException("status应为Operation或Construction");

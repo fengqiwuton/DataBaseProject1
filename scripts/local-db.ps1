@@ -1,5 +1,5 @@
 ﻿param(
-    [ValidateSet('start','import','connect','stop','status')][string]$Action='status',
+    [ValidateSet('start','import','connect','sql-reader','stop','status')][string]$Action='status',
     [string]$PgBin='',
     [int]$Port=55437
 )
@@ -46,6 +46,10 @@ function Check-OwnedCluster {
     $expectedPath = [IO.Path]::GetFullPath($dataDir).Replace('\','/').TrimEnd('/')
     if ($actualData.Trim().Replace('\','/').TrimEnd('/') -ine $expectedPath) { throw '端口指向其他数据库实例，操作已停止。' }
 }
+function Enable-SqlReader {
+    Invoke-MetroPsql -PsqlArguments @('-d','metro_test','-v','ON_ERROR_STOP=1','-f',(Join-Path $projectRoot 'sql/web-reader.sql'))
+    if ($LASTEXITCODE -ne 0) { throw 'SQL 查询账号配置失败' }
+}
 if ($Action -eq 'start') {
     if (-not (Test-Path -LiteralPath (Join-Path $dataDir 'PG_VERSION'))) {
         if (Test-Path -LiteralPath $dataDir) { throw 'pgdata目录已有内容但不是完整集群；请手工核查。' }
@@ -72,6 +76,10 @@ if ($Action -eq 'start') {
     Write-Output '重建专用metro_test库内的project1六表；其他schema不会清理。'
     Invoke-MetroPsql -PsqlArguments @('-d','metro_test','-v','ON_ERROR_STOP=1','-f',(Join-Path $projectRoot 'sql/import.sql'))
     if ($LASTEXITCODE -ne 0) { throw '导入失败，事务已回滚' }
+    Enable-SqlReader
+} elseif ($Action -eq 'sql-reader') {
+    Check-OwnedCluster
+    Enable-SqlReader
 } elseif ($Action -eq 'connect') {
     Check-OwnedCluster
     Write-Host '可输入 SQL 或 \dt project1.*；SQL 用分号结束，输入 \q 退出。'

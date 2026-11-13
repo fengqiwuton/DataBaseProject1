@@ -33,20 +33,33 @@ class Canvas:
         left=x-width/2 if center else x
         self.svg.append(f'<text x="{left}" y="{y+size}" font-family="Microsoft YaHei, sans-serif" font-size="{size}" font-weight="{700 if bold else 400}" fill="{color}">{escape(s)}</text>')
         self.d.text((left*2,y*2),s,font=font,fill=color,anchor='lt')
-        if under:self.line([(left,y+size+5),(left+width,y+size+5)],width=1)
-    def entity(self,x,y,w,title,rows):
+        if under:self.line([(left,y+size+5),(left+width,y+size+5)],dashed=under=='partial',width=1)
+    def entity(self,x,y,w,title,rows,weak=False):
         height=58+len(rows)*38+16
         self.rect(x,y,w,height);self.rect(x,y,w,52,BLUE)
+        if weak:
+            inset=6
+            self.line([(x+inset,y+inset),(x+w-inset,y+inset),(x+w-inset,y+height-inset),
+                       (x+inset,y+height-inset),(x+inset,y+inset)])
         self.text(x+w/2,y+10,title,24,True,True)
         for i,row in enumerate(rows):
             s,key=row if isinstance(row,tuple) else (row,False)
             self.text(x+20,y+65+i*38,s,23,under=key)
         return height
-    def diamond(self,x,y,title,rx=95,ry=52):
-        pts=[(x-rx,y),(x,y-ry),(x+rx,y),(x,y+ry),(x-rx,y)]
-        self.svg.append('<polygon points="'+' '.join(f'{a},{b}' for a,b in pts[:-1])+f'" fill="#f2f7f9" stroke="{EDGE}" stroke-width="2"/>')
-        self.d.polygon([(a*2,b*2) for a,b in pts[:-1]],fill='#f2f7f9',outline=EDGE,width=4)
+    def polygon(self,pts,fill):
+        self.svg.append('<polygon points="'+' '.join(f'{a},{b}' for a,b in pts)+f'" fill="{fill}" stroke="{EDGE}" stroke-width="2"/>')
+        self.d.polygon([(a*2,b*2) for a,b in pts],fill=fill,outline=EDGE,width=4)
+    def diamond(self,x,y,title,rx=95,ry=52,identifying=False):
+        self.polygon([(x-rx,y),(x,y-ry),(x+rx,y),(x,y+ry)],'#f2f7f9')
+        if identifying:
+            self.polygon([(x-rx+12,y),(x,y-ry+6),(x+rx-12,y),(x,y+ry-6)],'#f2f7f9')
         self.text(x,y-17,title,23,center=True)
+    def arrow(self,start,end):
+        self.line([start,end])
+        x,y=end; dx=x-start[0]; dy=y-start[1]; length=(dx*dx+dy*dy)**.5
+        dx/=length; dy/=length
+        self.polygon([end,(x-dx*15+dy*5,y-dy*15-dx*5),
+                      (x-dx*15-dy*5,y-dy*15+dx*5)],EDGE)
     def save(self,name):
         OUT.mkdir(parents=True,exist_ok=True)
         (OUT/(name+'.svg')).write_text('\n'.join(self.svg)+ '\n</svg>',encoding='utf-8')
@@ -56,36 +69,42 @@ class Canvas:
 def conceptual():
     c=Canvas()
     c.text(70,35,'深圳地铁概念 E-R 图',36,True)
-    c.text(70,95,'Lecture 7 表示法｜概念实体、联系与属性｜与当前六表实现保持一致',23,color=GRAY)
-    c.entity(80,245,300,'行政区 District',[('district_id',True),'name_en'])
-    c.entity(740,245,320,'车站 Station',[('station_id',True),'name_zh','name_en','lon_mdeg [可空]','lat_mdeg [可空]'])
-    c.entity(1400,245,310,'线路 MetroLine',[('line_id',True),'name_zh','name_en'])
-    c.diamond(545,325,'位于')
-    c.line([(380,325),(450,325)])
-    c.line([(640,321),(740,321)]);c.line([(640,329),(740,329)])
-    c.text(390,285,'0..*',22);c.text(662,285,'1..1',22)
-    c.diamond(1230,365,'经过')
-    c.line([(1060,365),(1135,365)]);c.line([(1325,365),(1400,365)])
-    c.text(1068,324,'0..*',22);c.text(1338,324,'0..*',22)
-    c.rect(1120,535,330,230)
-    for i,s in enumerate(['position','status','opening_year','first_train [可空]','last_train [可空]']):c.text(1140,550+i*39,s,23)
-    c.line([(1230,417),(1230,535)],dashed=True)
-    c.text(1480,553,'关系属性',23,True)
-    c.text(1480,600,'不含 station_id',21,color=GRAY)
-    c.text(1480,637,'或 line_id',21,color=GRAY)
-    c.text(1480,690,'它们在映射成表时引入',19,color=GRAY)
-    c.diamond(900,640,'属于 / 拥有',110,52)
-    c.line([(900,509),(900,588)]);c.text(922,540,'0..*',22)
-    c.line([(896,692),(896,795)]);c.line([(904,692),(904,795)]);c.text(925,733,'1..1',22)
-    c.entity(740,795,420,'出口 StationExit',[('exit_id',True),'exit_code','{ landmark_name }'])
-    c.text(90,520,'业务唯一性（映射后由约束落实）',23,True)
-    for i,s in enumerate(['District.name_en 唯一','Station：name_zh + 所属行政区唯一','MetroLine：中英文名称分别唯一','StationExit：所属车站 + exit_code 唯一','经过：车站 + 线路唯一；线路 + position 唯一']):c.text(90,569+i*42,s,21)
-    c.text(90,826,'出口采用全局 exit_id，因此画普通实体。',21,color=GRAY)
-    c.text(90,868,'地标在当前范围内仅有名称，作为多值属性。',21,color=GRAY)
-    c.text(90,910,'可空值与多值集合允许为空，二者含义不同。',21,color=GRAY)
-    c.line([(70,1045),(1730,1045)],color='#cbd7dc',width=1)
-    c.text(70,1060,'图例：下划线=主键；菱形=联系；虚线连接属性框；{ }=多值属性；双线=全参与。',21)
-    c.text(70,1100,'l..h 标在实体侧，表示该实体参与该联系的次数（Lecture 7 p.35）；0..* 保留新增空线路/未编线站点。',20,color=GRAY)
+    c.text(70,95,'Lecture 7 表示法｜属性后的「←」标注 CSV 原列名',24,color=GRAY)
+    c.entity(70,180,285,'行政区 District',[('district_id',True),'name_en ← District'])
+    station_height=c.entity(620,180,565,'车站 Station',[('station_id',True),'name_zh ← Station Name / station_name',
+                         'name_en ← Station Name EN / station_name_en','longitude ← latitude¹','latitude ← longitude¹'])
+    c.entity(1430,180,320,'线路 MetroLine',[('line_id',True),'name_zh ← Line Chineses','name_en ← Line En'])
+    c.diamond(500,263,'归属行政区',82,48)
+    c.arrow((418,263),(355,263))
+    c.line([(579,259),(620,259)]);c.line([(579,267),(620,267)])
+    c.text(361,220,'0..*',22);c.text(575,220,'1..1',22)
+    c.text(500,320,'1 : N',22,center=True)
+    c.diamond(1307,300,'经过',69,48)
+    c.line([(1185,300),(1238,300)]);c.line([(1376,300),(1430,300)])
+    c.text(1191,257,'0..*',22);c.text(1382,257,'0..*',22)
+    c.text(1325,360,'M : N',22)
+    c.rect(1210,470,510,236)
+    for i,s in enumerate(['position ← Num','status ← Status','opening_year ← Opening',
+                          'first_train ← Start Time','last_train ← End Time']):c.text(1232,486+i*41,s,23)
+    c.line([(1307,348),(1307,470)],dashed=True)
+    c.diamond(885,579,'拥有',99,52,identifying=True)
+    c.arrow((885,527),(885,180+station_height))
+    c.text(909,475,'0..*',22)
+    c.line([(881,629),(881,734)]);c.line([(889,629),(889,734)]);c.text(908,666,'1..1',22)
+    c.text(1010,561,'1 : N',22)
+    c.entity(635,734,500,'出口 StationExit（弱实体）',[('exit_code', 'partial'),'{ landmark_name } ← landmark'],weak=True)
+    c.text(767,799,'← exit',23)
+    c.text(70,445,'怎样识别一个出口？',26,True)
+    c.text(70,495,'出口编号可跨站重复；同一站内唯一。',23)
+    c.text(70,538,'完整标识 = 所属车站 ＋ 出口编号。',23)
+    c.text(70,581,'「拥有」是识别联系，每个出口恰属一站。',23)
+    c.text(70,655,'「经过」的站序与时刻取决于车站和线路。',23)
+    c.text(70,698,'尚未编线的站与空线路都允许存在。',23)
+    c.text(70,926,'¹ 源 CSV 的经纬度表头与数值范围相反，按数值含义映射；坐标可空。',23)
+    c.text(70,967,'首末班时间可空；出口可以没有地标。',23)
+    c.line([(70,1024),(1730,1024)],color='#cbd7dc',width=1)
+    c.text(70,1047,'实线下划线＝主键；虚线下划线＝部分键；双矩形＝弱实体；双菱形＝识别联系。',23)
+    c.text(70,1088,'箭头指向「一」端；双线＝全参与；实体侧 l..h＝参与次数；{ }＝多值属性。',23)
     c.save('概念ER图_Lecture7')
 
 

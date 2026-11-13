@@ -31,7 +31,7 @@ public final class WebServer implements AutoCloseable {
             String path=x.getRequestURI().getPath();
             if(path.equals("/api")) { api(x); return; }
             if(!x.getRequestMethod().equals("GET")) { send(x,405,Map.of("error","不支持的方法")); return; }
-            String file=switch(path) { case "/" -> "index.html"; case "/app.js" -> "app.js"; case "/style.css" -> "style.css"; default -> null; };
+            String file=switch(path) { case "/", "/sql" -> "index.html"; case "/app.js" -> "app.js"; case "/style.css" -> "style.css"; default -> null; };
             if(file==null) { send(x,404,Map.of("error","未找到页面")); return; }
             try(InputStream in=WebServer.class.getResourceAsStream("/web/"+file)) {
                 if(in==null) { send(x,500,Map.of("error","界面资源缺失，请重新构建")); return; }
@@ -51,12 +51,25 @@ public final class WebServer implements AutoCloseable {
             if(!token.equals(x.getRequestHeaders().getFirst("X-Metro-Token")) || (origin!=null && !origin.equals("http://127.0.0.1:"+port()) && !origin.equals("http://localhost:"+port()))) {
                 send(x,403,Map.of("error","请求来源或令牌无效")); return;
             }
-            if(!x.getRequestHeaders().getFirst("Content-Type").startsWith("application/x-www-form-urlencoded")) { send(x,415,Map.of("error","不支持的内容类型")); return; }
+            String contentType=x.getRequestHeaders().getFirst("Content-Type");
+            if(contentType==null || !contentType.startsWith("application/x-www-form-urlencoded")) { send(x,415,Map.of("error","不支持的内容类型")); return; }
             byte[] body=x.getRequestBody().readNBytes(65537);
             if(body.length>65536) { send(x,413,Map.of("error","请求过大")); return; }
             p.putAll(decode(new String(body,StandardCharsets.UTF_8)));
         }
         String action=p.getOrDefault("action","stats");
+        if(action.equals("sqlQuery")) {
+            if(!method.equals("POST")) { send(x,405,Map.of("error","SQL 查询必须使用 POST")); return; }
+            try { send(x,200,Map.of("data",service.sqlQuery(p.get("sql")))); }
+            catch(IllegalArgumentException e) { send(x,400,Map.of("error",e.getMessage())); }
+            catch(java.sql.SQLException e) {
+                String state=e.getSQLState();
+                if(state==null || state.startsWith("08") || state.startsWith("28")) send(x,503,Map.of("error","SQL 查询账号无法连接数据库，请确认 PostgreSQL 和只读账号配置。"));
+                else if(state.equals("57014")) send(x,400,Map.of("error","查询超时，请缩小查询范围。"));
+                else send(x,400,Map.of("error","PostgreSQL "+state+" · "+e.getMessage()));
+            }
+            return;
+        }
         if(MetroService.WRITES.contains(action) && !method.equals("POST")) { send(x,405,Map.of("error","修改操作必须使用POST")); return; }
         try { send(x,200,Map.of("data",service.execute(action,p))); }
         catch(IllegalArgumentException | java.time.DateTimeException e) { send(x,400,Map.of("error",e.getMessage())); }

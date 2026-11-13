@@ -13,7 +13,7 @@ try {
     if ((Get-FileHash -LiteralPath $driverPath -Algorithm SHA256).Hash -ne $expectedHash) { throw 'JDBC驱动哈希不匹配，请核对下载来源。' }
     New-Item -ItemType Directory -Force -Path 'app/build/classes/sql','app/build/classes/web','app/build/test-classes' | Out-Null
     $mainSources = @(Get-ChildItem -LiteralPath 'app/src/main/java' -Recurse -Filter '*.java' | ForEach-Object FullName)
-    & javac --release 17 -encoding UTF-8 -d app/build/classes $mainSources
+    & javac --release 17 -encoding UTF-8 -cp $driverPath -d app/build/classes $mainSources
     if ($LASTEXITCODE -ne 0) { throw 'Java compilation failed' }
     Copy-Item -Path 'sql/q*.sql' -Destination 'app/build/classes/sql' -Force
     Copy-Item -Path 'app/src/main/resources/web/*' -Destination 'app/build/classes/web' -Force

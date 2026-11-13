@@ -14,7 +14,7 @@ target=root/'dist/Project1_v0.zip'
 folders=['app/src','app/lib','sql','tools','tests','scripts','docs','generated','source-data']
 files=[p for d in folders for p in (root/d).rglob('*') if p.is_file() and '__pycache__' not in p.parts]
 files += [root/'app/pom.xml',root/'app/build/metro.jar',root/'config/db.example.properties',root/'config/data-rules.json',root/'.gitignore']
-files += list(root.glob('*.md'))+list(root.glob('*.json'))
+files += list(root.glob('*.md'))+list(root.glob('*.json'))+list(root.glob('request.txt'))
 with zipfile.ZipFile(target,'w',zipfile.ZIP_DEFLATED) as archive:
     for p in sorted(set(files)):
         archive.write(p,Path('Project1_v0')/p.relative_to(root))

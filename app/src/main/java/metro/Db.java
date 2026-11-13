@@ -5,6 +5,10 @@ import java.sql.*;
 public final class Db {
     private final Config config;
     public Db(Config config) { this.config=config; }
+    Db forSqlConsole() {
+        return new Db(new Config(config.url(),System.getenv().getOrDefault("METRO_SQL_USER","metro_sql_reader"),
+            System.getenv().getOrDefault("METRO_SQL_PASSWORD","")));
+    }
     public Connection open() throws SQLException {
         Connection c = DriverManager.getConnection(config.url(),config.user(),config.password());
         try (Statement s=c.createStatement()) {

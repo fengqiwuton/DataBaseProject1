@@ -63,7 +63,11 @@ java -jar app/build/metro.jar --action q7 station_name=Mawan 'line_name=Line 5' 
 java -jar app/build/metro.jar --action stations search=梨园
 ```
 
-CLI 的输出/输入编码为 UTF-8；PowerShell 启动脚本会相应设置终端编码。应用的 `--action` 与界面使用同一 action 集合，字段名可参考 `MetroService.java` 和交互菜单。应用只接受预定义操作，不提供任意 SQL 执行入口。
+CLI 的输出/输入编码为 UTF-8，PowerShell 启动脚本会设置终端编码。`--action` 支持与界面共用的站点、线路和数据核验操作，字段名见 `MetroService.java` 和交互菜单。
+
+网页的站点搜索可选择匹配站点编号、中文站名、英文站名、行政区或全部字段。编号支持 `347` 或 `#347`，精确匹配。名称和区名支持包含匹配。详情、路线和插站可输入站名或编号，也可从候选中选择。插站按列表顺序提交，多个站点可以用逗号分隔。
+
+网页的 [SQL 查询](http://127.0.0.1:8088/sql) 每次执行一条只读语句，最多显示 200 行。用 `local-db.ps1 -Action import` 导入时会配置查询账号。已经导入数据的本地项目库可运行 `./scripts/local-db.ps1 -Action sql-reader` 单独配置，保留现有数据。使用自己的 PostgreSQL 实例时，可在目标库以表所有者执行 `sql/web-reader.sql`，或准备具有项目表 SELECT 权限的专用账号并设置 `METRO_SQL_USER`、`METRO_SQL_PASSWORD`。
 
 DataGrip 中运行 `sql/queries.sql`，包含完整 Q1–Q7 默认示例。`sql/q1.sql`–`q7.sql` 则是 JDBC 绑定参数版本，`?` 需由应用绑定或在客户端输入参数。若要原样使用题目不带 schema 的函数调用，先运行：
 
@@ -73,6 +77,8 @@ SELECT get_station_n_neighbor('Mawan','Line 5',5);
 ```
 
 Q7 按较小站序、较大站序返回两行；越界保留 NULL，n=0 返回当前站两次，负数/空值/不存在或歧义目标报错。该 n=0 定义是已披露的本实现口径。
+
+按新增 [request.txt](request.txt) 整理的入口：[逐项验收](docs/request-acceptance.md)、[Task 1–2 报告配图](docs/report-task1-task2.md)、[Task 3–4 答辩操作](docs/defense-guide.md)。单独提交的 `sql/schema.sql` 只有六条建表语句；独立执行前先创建 `project1` schema。网页在同一条线路插站或移站后立即显示 **Num（站序）**，备用核对 SQL 为 `sql/defense-line.sql`。
 
 ## 路径与票价边界
 
@@ -139,4 +145,4 @@ docs/                   实施计划、验证记录、ER说明、AI使用和代�
 
 核心计数：10 区、439 站、29 线、567 条线路站点关系、1304 出口、3271 出口地标关联。六表满足本设计的 3NF、主键/业务唯一性与无环外键约束。详细口径见原方案及 `config/data-rules.json`；梨园出口归属、组合出口展开和坐标映射仍应由组员向教师确认。
 
-本次交付的是可运行代码与证据，**不包含已完成的课程最终 PDF、真实组员分工、标准概念图最终截图、DataGrip 实库关系图截图或教师认可票价数据**。图源、AI使用说明、验证记录已提供供后续整理。最终提交截止时间以课程 PDF 为准。
+已提供课程概念 E-R 图、DataGrip 实库关系图、报告配图说明、AI 使用说明和验证记录。课程最终 PDF、真实组员分工由组员完成；真实票价需要教师认可的数据。最终提交截止时间以课程 PDF 为准。

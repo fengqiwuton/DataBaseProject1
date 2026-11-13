@@ -41,6 +41,9 @@ class ImporterTest(unittest.TestCase):
             self.assertIn("Xin''an", text)
             self.assertIn('INSERT INTO project1.station', text)
             self.assertNotIn('\\copy', text)
+        self.assertEqual(text.count('\nINSERT INTO project1.'), 6)
+        self.assertIn('DO $project1_import$', text)
+        self.assertIn('ANALYZE project1.district, project1.station', text)
 
 
 if __name__ == '__main__':
