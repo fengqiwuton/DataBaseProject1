@@ -4,19 +4,20 @@
 
 本设计依据《ZQ_Fall2026_CS307_Lecture7.pdf》的概念建模规范，以及《CS307-Fall26-project1.pdf》的任务约束，并与当前 `Project1_v0/sql/schema.sql` 逐表核对。本轮绘图和解释没有修改数据库结构、源 CSV 或既有业务代码。课件中的作业公告只是材料内容，不作为本轮操作指令。
 
-![依据Lecture 7表示法的概念ER图](概念ER图_Lecture7.png)
+![依据Lecture 7表示法的概念ER图](E-R_project1.png)
 
 ![概念设计到六表的关系映射](六表关系映射图.png)
 
 ## 1. 先区分概念 ER 图与数据库关系图
 
-用于 Task 1 的是本目录 **概念ER图_Lecture7.png / .svg**。矩形表示实体集，菱形表示联系集，实线下划线标主键。箭头指向「一」端，双线表示全参与，实体侧 `l..h` 标参与次数。双矩形表示弱实体，双菱形表示识别联系，虚线下划线表示部分键。联系属性放在与菱形虚线连接的属性框内，多值属性用花括号。
+用于 Task 1 的是本目录 **概念ER图_Lecture7.png / .svg**（另有同记法的 draw.io 版本 `概念ER图_drawio.drawio` + `E-R_project1.png`，同样把出口画成弱实体，两版取其一即可）。矩形表示实体集，菱形表示联系集，实线下划线标主键。箭头指向「一」端，双线表示全参与，实体侧 `l..h` 标参与次数。双矩形表示弱实体，双菱形表示识别联系，虚线下划线表示部分键。联系属性放在与菱形虚线连接的属性框内，多值属性用花括号。
+
 
 课件不是所有属性都画椭圆的传统 Chen 图，也不是乌鸦脚表结构图。因此，此次没有直接将之前的六表 Mermaid 图充当课件要求的概念图。
 
 另提供 **六表关系映射图.png / .svg**，解释概念设计如何落到现有表和外键。Task 2 的正式配图使用 [DataGrip-project1.png](DataGrip-project1.png)，由 DataGrip 2026.2.5 连接实际 PostgreSQL 验证库后从 `project1` 导出。
 
-绘图软件/工具可如实填写：**Python 3 + Pillow，配合自编 SVG 绘图脚本**，源文件为 `tools/draw_er_lecture7.py`。SVG 为可编辑矢量文件，PNG 为3600×2320像素，便于插入报告。图中文字与图形由程序绘制，未复制课件图形或网络图片。重新生成需安装 Pillow 和图中指定的微软雅黑字体。
+绘图软件/工具可如实填写：Task 1 图为 **diagrams.net（draw.io）**，源文件 `概念ER图_drawio.drawio`，PNG 由 diagrams.net viewer 渲染导出（`tools/draw_er_drawio.py` 复现该流程，内置离线渲染器作后备）；早期版本为 **Python 3 + Pillow**，源文件 `tools/draw_er_lecture7.py`（SVG + 3600×2320 PNG）。图中文字与图形由程序绘制，未复制课件图形或网络图片。重新生成需安装 Pillow 和微软雅黑/ Times 字体。
 
 ## 2. 为什么不是“CSV 一张表”或“六个概念实体”
 

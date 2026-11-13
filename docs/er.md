@@ -2,7 +2,9 @@
 
 2026-11-02新增：按Lecture 7课堂表示法绘制的正式概念图、六表映射图及完整设计理由位于[ER_lecture7目录](ER_lecture7/ER设计思路与项目要求对应说明.md)。下方Mermaid保留为关系结构参考，不能混同为课堂概念表示法。
 
+
 以下为可编辑的逻辑图源，可在支持 Mermaid 的软件中查看。正式报告配图和说明见 [Report Task 1–2](report-task1-task2.md)，其中包含课程表示法概念图和 DataGrip 从 PostgreSQL 实库导出的关系图。
+
 
 ```mermaid
 erDiagram

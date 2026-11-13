@@ -3,7 +3,30 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Push-Location -LiteralPath $projectRoot
 try {
-    if (-not (Get-Command javac -ErrorAction SilentlyContinue)) { throw '需要JDK 17或更新版本（包含javac）。' }
+    $javac = Get-Command javac -ErrorAction SilentlyContinue
+    if (-not $javac) { throw '需要JDK 17或更新版本（包含javac）。' }
+    # Oracle 的 javapath 只代理 java/javac，jar 常常不在 PATH：按 JAVA_HOME -> java.home 顺序找。
+    $jarExe = (Get-Command jar -ErrorAction SilentlyContinue).Source
+    if (-not $jarExe -and $env:JAVA_HOME) {
+        $candidate = Join-Path $env:JAVA_HOME 'bin/jar.exe'
+        if (Test-Path -LiteralPath $candidate) { $jarExe = $candidate }
+    }
+    if (-not $jarExe) {
+        $javaExe = (Get-Command java -ErrorAction SilentlyContinue).Source
+        if ($javaExe) {
+            $errFile = Join-Path ([IO.Path]::GetTempPath()) ('metro_java_home_' + [guid]::NewGuid().ToString('N') + '.txt')
+            try {
+                # java -XshowSettings 把属性写到 stderr，重定向到文件可避开 ErrorActionPreference=Stop
+                Start-Process -FilePath $javaExe -ArgumentList '-XshowSettings:properties','-version' -NoNewWindow -Wait -RedirectStandardError $errFile -RedirectStandardOutput "$errFile.out" | Out-Null
+                $text = (Get-Content -LiteralPath $errFile -Raw -ErrorAction SilentlyContinue) + (Get-Content -LiteralPath "$errFile.out" -Raw -ErrorAction SilentlyContinue)
+                if ($text -match 'java\.home = (.+)') {
+                    $candidate = Join-Path $Matches[1].Trim() 'bin\jar.exe'
+                    if (Test-Path -LiteralPath $candidate) { $jarExe = $candidate }
+                }
+            } catch { } finally { Remove-Item -LiteralPath $errFile,"$errFile.out" -Force -ErrorAction SilentlyContinue }
+        }
+    }
+    if (-not $jarExe) { throw '找不到 jar.exe：请把 JDK 的 bin 目录加入 PATH，或设置 JAVA_HOME 指向 JDK。' }
     $driverPath = Join-Path $projectRoot 'app/lib/postgresql-42.7.14.jar'
     if (-not (Test-Path -LiteralPath $driverPath)) {
         New-Item -ItemType Directory -Force -Path (Split-Path -Parent $driverPath) | Out-Null
@@ -18,11 +41,11 @@ try {
     Copy-Item -Path 'sql/q*.sql' -Destination 'app/build/classes/sql' -Force
     Copy-Item -Path 'app/src/main/resources/web/*' -Destination 'app/build/classes/web' -Force
     "Manifest-Version: 1.0`nMain-Class: metro.Main`nClass-Path: ../lib/postgresql-42.7.14.jar`n`n" | Set-Content -LiteralPath 'app/build/MANIFEST.MF' -Encoding ascii
-    & jar --create --file app/build/metro.jar --manifest app/build/MANIFEST.MF -C app/build/classes .
+    & $jarExe --create --file app/build/metro.jar --manifest app/build/MANIFEST.MF -C app/build/classes .
     if ($LASTEXITCODE -ne 0) { throw 'JAR packaging failed' }
     if ($Tests) {
         $testSources = @(Get-ChildItem -LiteralPath 'app/src/test/java' -Recurse -Filter '*.java' | ForEach-Object FullName)
-        & javac --release 17 -encoding UTF-8 -cp app/build/classes -d app/build/test-classes $testSources
+        & $javac.Source --release 17 -encoding UTF-8 -cp app/build/classes -d app/build/test-classes $testSources
         if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed' }
     }
     Write-Output 'Build PASS: app/build/metro.jar'

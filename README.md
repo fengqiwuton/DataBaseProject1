@@ -114,6 +114,10 @@ python tools/generate_import.py
 # 只读性能采样；不修改数据库，结果为generated/benchmark.json。
 python tools/benchmark.py
 
+# 导入准确性核验：重建专用库并逐值对账六表、Q1–Q7、序列、约束与其他schema隔离。
+# 只对专用测试库运行；会连续重建两次project1以验证可重复执行。
+python tools/verify_import.py --psql '<psql路径>'
+
 # 停止本项目本地测试实例（保留数据文件）。
 ./scripts/local-db.ps1 -Action stop
 ```
@@ -136,6 +140,9 @@ app/lib/                固定版本JDBC运行依赖
 app/build/metro.jar     已构建的入口JAR（需同时保留app/lib）
 sql/                    独立DDL、完整导入SQL、函数与查询
 tools/generate_import.py 只用标准库的确定性生成器
+tools/verify_import.py  导入准确性核验：逐值对账、Q1–Q7、序列、约束与schema隔离
+tools/draw_er_drawio.py 生成 draw.io 概念E-R图源文件与同版式PNG
+tools/check_design.py   Task 1/2 交叉核对：图↔DDL↔目录↔文档
 source-data/Archive.zip 原始输入的逐字节副本
 config/data-rules.json  明确的数据假设和源文件哈希
 generated/              审计、逐行映射及性能实测JSON
