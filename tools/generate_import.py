@@ -13,11 +13,6 @@ import re
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-# Rows per multi-row INSERT. Measured on PostgreSQL 18.6: row-by-row (5620 statements)
-# is 3-4x slower; 500.."all rows in one statement" differ by a few milliseconds at this
-# data size. 2000 keeps every table within 2 statements without oversized SQL text.
-BATCH_ROWS = 2000
-
 TABLES = {
     'district': ['district_id', 'name_en'],
     'station': ['station_id', 'district_id', 'name_zh', 'name_en', 'lon_mdeg', 'lat_mdeg'],
@@ -26,6 +21,7 @@ TABLES = {
     'station_exit': ['exit_id', 'station_id', 'exit_code'],
     'exit_landmark': ['exit_id', 'landmark_name'],
 }
+BASELINE_COUNTS = dict(zip(TABLES, (10, 439, 29, 567, 1304, 3271)))
 
 
 def parse_exits(label):
@@ -114,11 +110,13 @@ def load_model(archive, rules_path):
             links.update((eid,t) for t in landmarks)
         smap['exit_rows'].append({'source_data_row':i,'source':r,'station_id':sid,'exit_ids':ids,'landmarks':landmarks})
     model['exit_landmark'] = sorted(links)
-    expected = [10,439,29,567,1304,3271]
-    if [len(model[k]) for k in TABLES] != expected: raise ValueError('Unexpected target counts')
+    counts = {table: len(rows) for table, rows in model.items()}
+    expected = rules.get('expected_counts', BASELINE_COUNTS)
+    if counts != expected:
+        raise ValueError(f'Unexpected target counts: actual={counts}, expected={expected}')
     model['sources'] = {'stations':stations,'exits':exits}
     model['source_mapping'] = smap
-    model['audit'] = {'source_sha256':hashes,'counts':{k:len(model[k]) for k in TABLES},'rules':rules,
+    model['audit'] = {'source_sha256':hashes,'counts':counts,'rules':rules,
                       'scope':'Offline source/model validation, not a database performance measurement'}
     return model
 

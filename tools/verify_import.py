@@ -20,11 +20,11 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 TABLES = ['district', 'station', 'metro_line', 'line_station', 'station_exit', 'exit_landmark']
 
 
-def load_model():
+def load_model(archive, rules):
     spec = importlib.util.spec_from_file_location('gi', ROOT / 'tools/generate_import.py')
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    return module, module.load_model(ROOT / 'source-data/Archive.zip', ROOT / 'config/data-rules.json')
+    return module, module.load_model(archive, rules)
 
 
 class Psql:
@@ -116,15 +116,19 @@ def main():
     parser.add_argument('--user', default='metro')
     parser.add_argument('--database', default='metro_test')
     parser.add_argument('--sql', default=str(ROOT / 'sql/import.sql'))
-    parser.add_argument('--skip-rebuild', action='store_true', help='verify the current data without re-importing')
+    parser.add_argument('--archive', type=pathlib.Path, default=ROOT / 'source-data/Archive.zip')
+    parser.add_argument('--rules', type=pathlib.Path, default=ROOT / 'config/data-rules.json')
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--skip-rebuild', action='store_true', help='run the course checks without re-importing')
+    mode.add_argument('--data-only', action='store_true', help='read-only row and value comparison against the selected archive and rules')
     args = parser.parse_args()
 
-    module, model = load_model()
+    module, model = load_model(args.archive, args.rules)
     psql = Psql(args.psql, args.host, args.port, args.user, args.database)
     report = Report()
 
     # --- 1. rebuild twice: import must be repeatable and set exactly the documented counts
-    if not args.skip_rebuild:
+    if not args.skip_rebuild and not args.data_only:
         code, out = psql.import_sql(args.sql)
         report.check('import.sql exits 0', code == 0, out[-400:])
         first = fingerprint(psql)
@@ -151,8 +155,12 @@ def main():
             report.check(f'values {table} match model row by row', False,
                          f'missing={missing} extra={extra}')
 
-    # --- 4. Q1-Q7 as documented in 数据核验摘要.json / the project report
+    if args.data_only:
+        return report.summary()
+
+    # --- 4. Q1-Q7 as documented in the project report
     report.check('Q1 station_count = 439', psql.scalar('SELECT count(*) FROM project1.station') == '439')
+    report.check('Q2 line_count = 29', psql.scalar('SELECT count(*) FROM project1.metro_line') == '29')
 
     lines = {r[0]: r[2] for r in model['metro_line']}
     stations = {r[0]: r for r in model['station']}

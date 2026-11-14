@@ -8,7 +8,7 @@
 2. 执行完成后刷新 `project1`，核对 `district/station/metro_line/line_station/station_exit/exit_landmark` 行数依次为 **10 / 439 / 29 / 567 / 1304 / 3271**。重复执行会重建这六表并恢复初始数据，应在 CRUD 演示前完成。
 3. 答辩时可说明，CSV 解码、去重、拆分和转义在生成脚本时完成。运行时每张表用一条多值 `INSERT`，由 PostgreSQL 在一个 `DO` 块里完成重建、导入、校验和统计，减少客户端逐条发命令的往返。三个辅助索引在数据写完后集中创建。全程保留主键、唯一约束和外键，任一步失败，整个事务回滚。
 
-本机 DataGrip 2026.2.5 两次执行新版均完成 **5/5** 条顶层语句并提交，显示 **825 ms、586 ms**。同机 PostgreSQL 12.1 上另用同一个 JDBC 连接交错跑新旧脚本各 15 次，耗时中位数为 **765.8 → 750.1 ms**。两次 DataGrip 时间用于说明现场执行，版本提速用同条件的 JDBC 对照。详细口径见[导入性能与验证](verification.md)。
+本机 DataGrip 2026.2.5 两次执行新版均完成 **5/5** 条顶层语句并提交，显示 **825 ms、586 ms**。同机 PostgreSQL 12.1 上另用同一个 JDBC 连接交错跑新旧脚本各 15 次，耗时中位数为 **765.8 → 750.1 ms**。两次 DataGrip 时间用于说明现场执行，版本提速用同条件的 JDBC 对照。 [项目报告](ER_lecture7/CS307_Project1_Report.pdf)
 
 终端备选：`psql -X -h 127.0.0.1 -p 55437 -U metro -d <答辩库名> -v ON_ERROR_STOP=1 -f sql/import.sql`。
 

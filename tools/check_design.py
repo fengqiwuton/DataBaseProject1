@@ -23,14 +23,12 @@ import xml.etree.ElementTree as ET
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 FIGURE = ROOT / 'docs/ER_lecture7/概念ER图_drawio.drawio'
-FIGURE_PNG = ROOT / 'docs/ER_lecture7/E-R_project1.png'
-FIGURE_NOTES = ROOT / 'docs/ER_lecture7/概念ER图_drawio说明.md'
-ER_DETAIL = ROOT / 'docs/ER_lecture7/ER设计思路与项目要求对应说明.md'
+REPORT_DIR = ROOT / 'docs/ER_lecture7'
+REPORT_TEX = REPORT_DIR / 'report-src/CS307_Project1_Report.tex'
+REPORT_PDF = REPORT_DIR / 'CS307_Project1_Report.pdf'
+FIGURE_PNG = REPORT_TEX.parent / 'figures/concept-er.png'
 SCHEMA = ROOT / 'sql/schema.sql'
 IMPORT_SQL = ROOT / 'sql/import.sql'
-PLAN_DOC = ROOT / '项目要求总结与技术实现路线.md'
-ER_DOC = ROOT / 'docs/er.md'
-DOCS = ROOT / 'docs'
 
 ENTITY_TABLES = {'district': 'district', 'station': 'station',
                  'line': 'metro_line', 'exit': 'station_exit'}
@@ -63,6 +61,14 @@ DIAMONDS = {'station_district', 'line_station', 'exit_station'}
 REL_ATTRS = ['position', 'status', 'opening_year', 'first_train', 'last_train']
 ARROWS = {('station_district', 'district'), ('exit_station', 'station')}
 DOUBLE_LINES = {('station', 'station_district'), ('exit', 'exit_station')}
+PARTICIPATION = {
+    'cardinality_district_station': '0..*',
+    'cardinality_station_district': '1..1',
+    'cardinality_station_line': '0..*',
+    'cardinality_line_station': '0..*',
+    'cardinality_station_exit': '0..*',
+    'cardinality_exit_station': '1..1',
+}
 REQUIRED_CHECKS = ['status = ANY', '"position" > 0', 'opening_year >= 1900',
                    'btrim(name_zh)', "lon_mdeg >= '-180000'", 'lon_mdeg IS NULL']
 TABLES = ['district', 'exit_landmark', 'line_station', 'metro_line', 'station', 'station_exit']
@@ -186,6 +192,16 @@ def check_figure(report, columns):
     report.line('PASS' if doubled == DOUBLE_LINES else 'FAIL',
                 'two double lines mark total participation', str(sorted(doubled)))
 
+    ranges = {key: plain(cell.get('value')).strip() for key, cell in cells.items()
+              if key.startswith('cardinality_') and cell.get('vertex') == '1'}
+    for endpoint, expected in PARTICIPATION.items():
+        actual = ranges.get(endpoint)
+        report.line('PASS' if actual == expected else 'FAIL',
+                    f'{endpoint}: entity participation range',
+                    f'expected={expected}, actual={actual}')
+    report.line('PASS' if ranges == PARTICIPATION else 'FAIL',
+                'exactly six l..h labels cover the six entity participation endpoints')
+
     dashed = [e for e in edges if 'dashed=1' in e.get('style', '')]
     report.line('PASS' if len(dashed) == 1 and dashed[0].get('source') == 'line_station'
                 else 'FAIL', 'relationship attributes attached by one dashed line')
@@ -205,7 +221,8 @@ def check_figure(report, columns):
                 'all connectors horizontal or vertical', f'max deviation {worst:.4f} px')
 
     # nothing but the diagram: no notes, legend or title inside the picture
-    allowed = set(ENTITY_TABLES) | set(DIAMONDS) | set(REL_ATTRS)
+    allowed = (set(ENTITY_TABLES) | set(DIAMONDS) | set(REL_ATTRS)
+               | set(PARTICIPATION.values()))
     for attrs in EXPECTED_ATTRS.values():
         allowed |= {name for name, _ in attrs} | {name.strip('{}') for name, _ in attrs}
     stray = []
@@ -230,7 +247,7 @@ def check_figure(report, columns):
                         f'figure attributes of "{entity}" match table {table}',
                         f'figure={drawing} table={sorted(allowed)}')
 
-    notes = FIGURE_NOTES.read_text(encoding='utf-8') if FIGURE_NOTES.exists() else ''
+    notes = REPORT_TEX.read_text(encoding='utf-8').replace(r'\_', '_') if REPORT_TEX.exists() else ''
     report.line('PASS' if ('diagrams.net' in notes or 'draw.io' in notes) else 'MISSING',
                 'drawing tool named next to the figure')
     report.line('PASS' if 'metro_line' in notes and 'station_exit' in notes else 'FAIL',
@@ -335,7 +352,7 @@ def check_catalog(report, psql_bin, conn, figure_diamonds):
     try:
         columns, constraints, sequences, detail = catalog(psql, conn)
     except Exception as error:
-        report.line('MISSING', 'catalog reachable; run without --skip-db to check keys',
+        report.line('WARN', 'catalog unavailable; live constraints were not verified',
                     str(error).splitlines()[0][:80])
         return
     tables = sorted(columns)
@@ -428,28 +445,33 @@ def check_catalog(report, psql_bin, conn, figure_diamonds):
 
 def check_docs(report):
     report.section('Task 2: written deliverables')
-    columns = sum((names for names in schema_columns_from_file().values()), [])
-    plan = PLAN_DOC.read_text(encoding='utf-8')
-    missing = [column for column in columns if column not in plan]
-    report.line('PASS' if not missing else 'FAIL',
-                'field dictionary mentions every column', str(missing))
-    er = ER_DOC.read_text(encoding='utf-8') + ER_DETAIL.read_text(encoding='utf-8')
-    report.line('PASS' if ('3NF' in er or '第三范式' in er) else 'FAIL',
-                '3NF argument present in the design notes')
-    one = '1NF' in er or '原子' in er
-    two = '2NF' in er or '部分依赖' in er or '依赖完整' in er
-    report.line('PASS' if one and two else 'WARN',
-                '1NF (atomic values) and 2NF (no partial dependency) also argued',
-                f'1NF={"yes" if one else "no"} 2NF={"yes" if two else "no"}')
+    source = REPORT_TEX.read_text(encoding='utf-8') if REPORT_TEX.is_file() else ''
+    report.line('PASS' if source else 'MISSING', 'maintainable LaTeX source exists', REPORT_TEX.name)
+    report.line('PASS' if REPORT_PDF.is_file() and REPORT_PDF.stat().st_size else 'MISSING',
+                'rendered report PDF exists (visual QA is a separate check)', REPORT_PDF.name)
+    screenshot = REPORT_TEX.parent / 'figures/datagrip-schema.png'
+    has_screenshot = '{datagrip-schema.png}' in source and screenshot.is_file() and screenshot.stat().st_size
+    report.line('PASS' if has_screenshot else 'MISSING',
+                'DataGrip screenshot exists and is referenced by the report', screenshot.name)
+    for label, phrase in [('1NF', '第一范式'), ('2NF', '第二范式'), ('3NF', '第三范式')]:
+        report.line('PASS' if phrase in source else 'FAIL', f'{label} discussed in the report')
 
-    screenshots = [p.name for p in DOCS.rglob('*')
-                   if p.is_file() and p.suffix.lower() in ('.png', '.jpg', '.jpeg')
-                   and 'datagrip' in p.name.lower()]
-    report.line('PASS' if screenshots else 'MISSING',
-                'DataGrip relationship screenshot (Task 2 requires the client to generate it)',
-                ', '.join(screenshots) or 'none found under docs/')
-    report.line('MISSING', 'per-table per-field explanation prose for the report '
-                           '(source material exists, the report section does not)')
+    expected = schema_columns_from_file()
+    covered = set()
+    table = None
+    for row in source.splitlines():
+        fields = row.split('&')
+        if len(fields) != 3:
+            continue
+        names = [re.search(r'\\code\{([^}]+)\}', cell.replace(r'\_', '_')) for cell in fields[:2]]
+        if names[0]:
+            table = names[0].group(1)
+        if table in expected and names[1] and fields[2].strip().rstrip('\\').strip():
+            covered.add((table, names[1].group(1)))
+    missing = sorted(f'{table}.{column}' for table, names in expected.items()
+                     for column in names if (table, column) not in covered)
+    report.line('PASS' if not missing else 'FAIL', 'report explains every DDL column',
+                f'{len(covered)}/23 columns; missing={missing}')
 
 
 def main():
@@ -468,7 +490,7 @@ def main():
     check_ddl(report)
     if args.skip_db:
         report.section('Task 2: live catalog')
-        report.line('MISSING', 'catalog checks skipped by --skip-db')
+        report.line('WARN', 'catalog checks skipped by --skip-db (not a missing deliverable)')
     else:
         check_catalog(report, args.psql,
                       ['-X', '-h', args.host, '-p', str(args.port),

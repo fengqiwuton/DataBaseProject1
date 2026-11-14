@@ -1,7 +1,7 @@
 """Generate the conceptual E-R diagram in the form used on Lecture 7, slide 5.
 
     docs/ER_lecture7/概念ER图_drawio.drawio   draw.io (diagrams.net) native source
-    docs/ER_lecture7/概念E-R图_drawio.png      exported by the diagrams.net viewer
+    docs/ER_lecture7/report-src/figures/concept-er.png  exported by the diagrams.net viewer
 
 Form copied from ZQ_Fall2026_CS307_Lecture7.pdf page 5 ("The New Running Example"):
 
@@ -11,7 +11,8 @@ Form copied from ZQ_Fall2026_CS307_Lecture7.pdf page 5 ("The New Running Example
   * arrow        = at most one on that side (functional / many-to-one)
   * double line  = total participation
   * dashed line  = attaches the relationship's descriptive attributes in a plain box
-  * braces       = multi-valued attribute; no l..h labels, no legend, no title inside
+  * braces       = multi-valued attribute
+  * l..h         = participation count at each entity end (Lecture 7, slide 35)
 
 Every connector is strictly horizontal or vertical (orthogonal): only the rhombus
 edges themselves are slanted. check_orthogonal() fails the build if that stops being
@@ -23,6 +24,7 @@ import base64
 import math
 import pathlib
 import subprocess
+import tempfile
 import urllib.parse
 import xml.sax.saxutils as sax
 import zlib
@@ -32,7 +34,7 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 OUT = ROOT / 'docs' / 'ER_lecture7'
 DRAWIO = OUT / '概念ER图_drawio.drawio'
-PNG = OUT / 'E-R_project1.png'
+PNG = OUT / 'report-src' / 'figures' / 'concept-er.png'
 
 W, H = 0, 0                     # fitted to the drawing by fit_page()
 MARGIN = 36
@@ -156,6 +158,19 @@ def check_orthogonal(points):
                             f"{start} -> {end} is diagonal")
     if problems:
         raise ValueError('Connectors must be horizontal or vertical:\n  ' + '\n  '.join(problems))
+
+
+def cardinality_labels(boxes):
+    """Entity-side ranges, not the number of entities at the opposite endpoint."""
+    district, station, line, exit_ = (boxes[name] for name in ('district', 'station', 'line', 'exit'))
+    return [
+        ('district_station', '0..*', district['x'] + district['w'] + 3, centre_y(boxes['station_district']) - 28),
+        ('station_district', '1..1', station['x'] - 52, centre_y(boxes['station_district']) - 28),
+        ('station_line', '0..*', station['x'] + station['w'] + 2, centre_y(boxes['line_station']) - 28),
+        ('line_station', '0..*', line['x'] - 52, centre_y(boxes['line_station']) - 28),
+        ('station_exit', '0..*', centre_x(station) + 10, station['y'] + station['h'] + 8),
+        ('exit_station', '1..1', centre_x(exit_) + 10, exit_['y'] - WEAK_FRAME - 32),
+    ]
 
 
 def fit_page(margin=MARGIN):
@@ -309,6 +324,10 @@ def drawio_xml():
     boxes = geometry()
     points = connection_points(boxes)
     check_orthogonal(points)
+    cardinality_style = (f'text;html=1;strokeColor=none;fillColor=#ffffff;align=center;'
+                         f'fontFamily=Times New Roman;fontSize=14;fontColor={INK};')
+    for key, value, x, y in cardinality_labels(boxes):
+        body.append(cell('cardinality_' + key, value, cardinality_style, x, y, 48, 22))
     number = 0
     for edge in EDGES:
         base = dashed if edge.get('dashed') else arrow if edge.get('arrow') else plain
@@ -476,6 +495,9 @@ def render_png():
         centre = box['y'] + PAD + ROW_H * index + ROW_H / 2
         _row(box['x'] + 8, centre, name, '', csv)
 
+    for _, value, x, y in cardinality_labels(boxes):
+        text(x + 24, y + 11, value, 14, anchor='mm')
+
     image.save(PNG, 'PNG', optimize=True)
     return PNG
 
@@ -509,8 +531,7 @@ def export_with_drawio(scale=SCALE, margin=26):
     if edge is None:
         print('headless Edge not found; falling back to the offline renderer')
         return False
-    scratch = ROOT / '.runtime'
-    scratch.mkdir(exist_ok=True)
+    scratch = pathlib.Path(tempfile.mkdtemp(prefix='cs307-drawio-'))
     shot = scratch / 'drawio_export.png'
     url = viewer_url(DRAWIO.read_text(encoding='utf-8'))
     window = f'{W + 80},{H + 80}'
@@ -518,6 +539,7 @@ def export_with_drawio(scale=SCALE, margin=26):
         if shot.exists():
             shot.unlink()
         subprocess.run([str(edge), '--headless=new', '--disable-gpu', '--no-first-run',
+                        f'--user-data-dir={scratch / "edge-profile"}',
                         '--hide-scrollbars', f'--force-device-scale-factor={scale}',
                         f'--window-size={window}', f'--virtual-time-budget={budget}',
                         f'--screenshot={shot}', url], capture_output=True)
@@ -536,7 +558,7 @@ def export_with_drawio(scale=SCALE, margin=26):
 
 
 def main():
-    OUT.mkdir(parents=True, exist_ok=True)
+    PNG.parent.mkdir(parents=True, exist_ok=True)
     fit_page()
     DRAWIO.write_text(drawio_xml(), encoding='utf-8')
     print(f'wrote {DRAWIO.relative_to(ROOT)}')

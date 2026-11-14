@@ -3,6 +3,14 @@
     "shenzhen_stations.csv": "50f29154006d25b60b8943360afce4df7482b7013c98aab51eca7389c2fc6bad",
     "station_exits.csv": "bf7f1479791b68e81b88b4d7fc405726ca1859144d22ddd398d80ec4bdddc6a6"
   },
+  "expected_counts": {
+    "district": 10,
+    "station": 439,
+    "metro_line": 29,
+    "line_station": 567,
+    "station_exit": 1304,
+    "exit_landmark": 3271
+  },
   "exit_station_district": {"梨园": "Longgang"},
   "coordinate_mapping": "latitude_is_longitude",
   "exit_count_mode": "atomic",

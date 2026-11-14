@@ -22,7 +22,7 @@ public final class Main {
         command("两站路径（使用站点ID）","route","start","end","mode?","planned?"),
         command("查找地标候选","landmarks","search"),
         command("两地标路线（完整名称）","landmarkRoute","start_landmark","end_landmark","mode?","planned?"),
-        command("两站票价（需提供认可的票价矩阵）","fare","start","end"),
+        command("两站票价（支持站名或编号）","fare","start","end"),
         command("车站详情/出口/所属线路","stationDetail","station_id"),
         command("Q1 车站总数","q1"),command("Q2 线路总数","q2"),command("Q3 运营站分区统计","q3"),
         command("Q4 按开通年统计","q4","line_name"),command("Q5 出口最多站","q5","line_name"),
@@ -76,7 +76,12 @@ public final class Main {
                         Command command=MENU.get(number-1); Map<String,String> p=new HashMap<>();
                         for(String field:command.fields()) {
                             boolean optional=field.endsWith("?"); String key=field.replace("?","");
-                            System.out.println("请输入 "+key+(optional?"（可空；mode默认stops，可选transfers；planned默认false）":"")+"：");
+                            if(command.action().equals("fare")) {
+                                String station=key.equals("start")?"出发站":"到达站";
+                                System.out.println("请输入"+station+"（完整中文站名、英文站名或编号，如 152 或 #152）：");
+                            } else {
+                                System.out.println("请输入 "+key+(optional?"（可空；mode默认stops，可选transfers；planned默认false）":"")+"：");
+                            }
                             if(!input.hasNextLine()) return;
                             String value=input.nextLine().trim();
                             if(!optional || !value.isBlank()) p.put(key,value);

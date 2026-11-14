@@ -27,6 +27,22 @@ public final class IntegrationTest {
         var huge=rows(s.execute("q7",p("station_name","Mawan","line_name","Line 5","n","2147483647")));
         check(huge.size()==2 && huge.stream().allMatch(r->r.get("neighbor")==null),"Q7 overflow");
         check(rows(s.execute("stations",p("search","梨园"))).size()==2,"same name identity");
+        Object fareById=s.execute("fare",p("start","152","end","229"));
+        check(fareById.equals(s.execute("fare",p("start","宝安","end","#229"))),"fare accepts Chinese names and #ID");
+        check(fareById.equals(s.execute("fare",p("start","bAO'an","end","#229"))),"fare accepts English names case-insensitively");
+        try {
+            s.execute("fare",p("start","宝安","end","梨园"));
+            throw new AssertionError("ambiguous fare station was accepted");
+        } catch (IllegalArgumentException expected) {
+            check(expected.getMessage().contains("Longgang") && expected.getMessage().contains("Luohu")
+                && expected.getMessage().contains("#229") && expected.getMessage().contains("#230"),"fare ambiguity lists both station IDs");
+        }
+        try {
+            s.execute("fare",p("start","宝安","end","龙岗"));
+            throw new AssertionError("district name was accepted as a station");
+        } catch (IllegalArgumentException expected) {
+            check(expected.getMessage().contains("到达站") && expected.getMessage().contains("龙岗"),"missing destination gives a useful error");
+        }
         int plannedStation=rows(s.execute("stations",p("search","梨园"))).stream()
             .filter(r->r.get("district").equals("Luohu")).mapToInt(r->((Number)r.get("station_id")).intValue()).findFirst().orElseThrow();
         for(String mode:List.of("stops","transfers")) {

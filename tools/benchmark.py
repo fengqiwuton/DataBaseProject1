@@ -51,7 +51,9 @@ def main():
     result={'scope':'Current model only; server EXPLAIN timing with instrumentation. Each query uses one session with first cold call recorded separately, followed by warm samples. No claim of measured speedup vs another schema. Excludes client startup/network time; application opens fresh connections and may pay cold function planning per request. Space includes table/index/TOAST but not database-wide WAL or shared catalogs.',
             'server_version':query('SELECT version();'),'system':platform.platform(),'space':spaces,
             'table_total_bytes':sum(r['total_bytes'] for r in spaces),'queries':plans}
-    (ROOT/'generated/benchmark.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+    output = ROOT / 'generated' / 'benchmark.json'
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print(json.dumps({'total_relation_bytes':result['table_total_bytes'],'timings':{k:(v['execution_ms_median'],v['execution_ms_p95']) for k,v in plans.items()}},ensure_ascii=False))
 
 

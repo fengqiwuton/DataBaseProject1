@@ -94,6 +94,24 @@
         <mxCell id="rel_attr_5" value="last_train&lt;span style=&quot;color:#5b6f7a;&quot;&gt;（End Time）&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontFamily=Times New Roman;fontStyle=2;fontSize=12.5;spacingLeft=4;" vertex="1" parent="1">
           <mxGeometry x="889.5" y="368" width="203" height="26" as="geometry"/>
         </mxCell>
+        <mxCell id="cardinality_district_station" value="0..*" style="text;html=1;strokeColor=none;fillColor=#ffffff;align=center;fontFamily=Times New Roman;fontSize=14;fontColor=#231f20;" vertex="1" parent="1">
+          <mxGeometry x="239" y="106" width="48" height="22" as="geometry"/>
+        </mxCell>
+        <mxCell id="cardinality_station_district" value="1..1" style="text;html=1;strokeColor=none;fillColor=#ffffff;align=center;fontFamily=Times New Roman;fontSize=14;fontColor=#231f20;" vertex="1" parent="1">
+          <mxGeometry x="514" y="106" width="48" height="22" as="geometry"/>
+        </mxCell>
+        <mxCell id="cardinality_station_line" value="0..*" style="text;html=1;strokeColor=none;fillColor=#ffffff;align=center;fontFamily=Times New Roman;fontSize=14;fontColor=#231f20;" vertex="1" parent="1">
+          <mxGeometry x="858" y="98" width="48" height="22" as="geometry"/>
+        </mxCell>
+        <mxCell id="cardinality_line_station" value="0..*" style="text;html=1;strokeColor=none;fillColor=#ffffff;align=center;fontFamily=Times New Roman;fontSize=14;fontColor=#231f20;" vertex="1" parent="1">
+          <mxGeometry x="1114" y="98" width="48" height="22" as="geometry"/>
+        </mxCell>
+        <mxCell id="cardinality_station_exit" value="0..*" style="text;html=1;strokeColor=none;fillColor=#ffffff;align=center;fontFamily=Times New Roman;fontSize=14;fontColor=#231f20;" vertex="1" parent="1">
+          <mxGeometry x="721" y="226" width="48" height="22" as="geometry"/>
+        </mxCell>
+        <mxCell id="cardinality_exit_station" value="1..1" style="text;html=1;strokeColor=none;fillColor=#ffffff;align=center;fontFamily=Times New Roman;fontSize=14;fontColor=#231f20;" vertex="1" parent="1">
+          <mxGeometry x="721" y="440" width="48" height="22" as="geometry"/>
+        </mxCell>
         <mxCell id="edge_1" style="endArrow=none;html=1;strokeColor=#231f20;strokeWidth=1.5;exitX=0.000000000;exitY=0.397260274;entryX=1.000000000;entryY=0.458333333;exitDx=0;exitDy=0;entryDx=0;entryDy=0;exitPerimeter=0;entryPerimeter=0;" edge="1" parent="1" source="station_body" target="station_district">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>

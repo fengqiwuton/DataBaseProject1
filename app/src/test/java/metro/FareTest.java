@@ -8,7 +8,7 @@ public final class FareTest {
         Path p=Files.createTempFile("metro-test-fare-",".csv");
         try {
             // Synthetic test fixture only; never packaged as operating fare data.
-            Files.writeString(p,"origin_station_id,destination_station_id,amount\n1,2,3.50\n");
+            Files.writeString(p,"\uFEFForigin_station_id,destination_station_id,amount\n1,2,3.50\n");
             var fare=new FareTable(p);
             if(!fare.lookup(1,2).get("available").equals(true) || !fare.lookup(2,1).get("available").equals(false)) throw new AssertionError("directional fare lookup");
             Files.writeString(p,"origin_station_id,destination_station_id,amount\n1,2,-3\n");

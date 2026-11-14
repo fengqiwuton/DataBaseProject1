@@ -97,9 +97,33 @@ public final class MetroService {
         return new MetroRepository.Membership(id(p,"station_id"),status,year,first,last);
     }
     private Object fare(Map<String,String> p) throws SQLException {
-        int start=id(p,"start"),end=id(p,"end");
-        if(stations(Map.of("station_id",""+start)).isEmpty() || stations(Map.of("station_id",""+end)).isEmpty()) throw new IllegalArgumentException("票价起终点不存在");
-        return fares.lookup(start,end);
+        return repo.db.transaction(true,c->{
+            int start=resolveFareStation(c,p.get("start"),"出发站");
+            int end=resolveFareStation(c,p.get("end"),"到达站");
+            return fares.lookup(start,end);
+        });
+    }
+    private static int resolveFareStation(Connection c,String input,String label) throws SQLException {
+        if(input==null || input.isBlank()) throw new IllegalArgumentException("请输入"+label+"的完整站名或编号。");
+        String text=input.strip();
+        String sql="SELECT s.station_id,s.name_zh,s.name_en,d.name_en district FROM station s JOIN district d USING(district_id) ";
+        Integer number=stationNumber(text.startsWith("+")?text.substring(1):text);
+        List<Map<String,Object>> matches;
+        if(number!=null) {
+            matches=MetroRepository.query(c,sql+"WHERE s.station_id=?",number);
+        } else {
+            matches=MetroRepository.query(c,sql+"WHERE s.name_zh=? OR lower(s.name_en)=lower(?) ORDER BY s.station_id",text,text);
+        }
+        if(matches.isEmpty()) {
+            throw new IllegalArgumentException("找不到"+label+"「"+text+"」。请用站点查询确认完整站名或编号。");
+        }
+        if(matches.size()>1) {
+            var choices=matches.stream()
+                .map(row->row.get("name_zh")+"（"+row.get("district")+"，#"+row.get("station_id")+"）")
+                .toList();
+            throw new IllegalArgumentException(label+"有同名候选，请改用编号："+String.join("、",choices));
+        }
+        return ((Number)matches.get(0).get("station_id")).intValue();
     }
     private Object route(Map<String,String> p,boolean landmarks) throws SQLException {
         String mode=p.getOrDefault("mode","stops");
